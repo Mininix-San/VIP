@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loja Daoshi - Gold & Top Up</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1lLnjQ3NYt6Bd6WapJ2p0EjzfQJIbB-es">
+  <style>
+    body {
+      background-image: url('https://lh3.googleusercontent.com/d/1wdPn1l98dwN2wBfCGBeAC0MKtNed1in2');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      font-family: Arial, sans-serif;
+      color: #ddd;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .panel {
+      width: 22%;
+      padding: 20px;
+      margin: 20px;
+      border: 3px solid #ff7b00;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      background-color: rgba(33, 33, 33, 0.9);
+      position: relative;
+    }
+    h2, h3 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #ecff00;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #ecff00;
+    }
+    input[type="number"], input[type="text"] {
+      width: calc(100% - 22px);
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #444;
+      color: #ddd;
+      border: 2px solid #00ff0c;
+      border-radius: 5px;
+    }
+    p {
+      margin: 10px 0;
+      color: #ecff00;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #ff0000;
+      color: white;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    /* Estilo para as "flores" caindo */
+    .flower {
+      position: absolute;
+      top: -50px;
+      font-size: 24px;
+      pointer-events: none;
+      animation: fall linear infinite, fadeOut linear infinite;
+    }
+    @keyframes fall {
+      from { transform: translateY(0px) rotate(0deg); }
+      to { transform: translateY(100vh) rotate(360deg); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  </style>
+  <script>
+    /* ======================== 
+       Funções Top Up 
+    ============================*/
+    let exchangeRate = 5.74;
+    let pacoteQuantidades = {
+      1: 0,
+      3: 0,
+      5: 0,
+      10: 0,
+      11: 0,  // $10 Especial
+      30: 0,
+      31: 0,  // $30 Especial
+      50: 0,
+      51: 0,  // $50 Especial
+      100: 0
+    };
+
+    const pacotePrecos = {
+      1: 0.9,
+      3: 2.65,
+      5: 4.2,
+      10: 7.5,
+      11: 8.5,  // Desconto do pacote $10 especial
+      30: 22.00,
+      31: 22.00, // Desconto do pacote $30 especial
+      50: 37.00,
+      51: 38.00, // Desconto do pacote $50 especial
+      100: 74.00
+    };
+
+    function updatePacoteQuantidades(pacote, quantidade) {
+      pacoteQuantidades[pacote] = parseInt(quantidade) || 0;
+      updatePacoteTotals();
+      atualizarValoresComCartao();
+    }
+
+    function updatePacoteTotals() {
+      let totalR = 0;
+      let totalD = 0;
+      // Grupos de pacotes para atualização dos totais
+      const pacotesUnificados = [
+        [1, 3, 5],
+        [10, 11, 30, 31],
+        [50, 51, 100]
+      ];
+      pacotesUnificados.forEach(grupo => {
+        let subtotalR = 0;
+        let subtotalD = 0;
+        grupo.forEach(pacote => {
+          const quantidade = pacoteQuantidades[pacote];
+          const preco = pacotePrecos[pacote];
+          subtotalR += quantidade * preco * exchangeRate;
+          subtotalD += quantidade * preco;
+        });
+        totalR += subtotalR;
+        totalD += subtotalD;
+        // Atualiza os subtotais do grupo (usa o primeiro pacote do grupo para identificar o elemento)
+        document.getElementById(`totalR${grupo[0]}`).innerText = subtotalR.toFixed(2);
+        document.getElementById(`totalD${grupo[0]}`).innerText = subtotalD.toFixed(2);
+      });
+      document.getElementById('totalRPacotes').innerText = totalR.toFixed(2);
+      document.getElementById('totalDPacotes').innerText = totalD.toFixed(2);
+    }
+
+    function calcularTotalComCartao(total) {
+      return (total * 1.06).toFixed(2);
+    }
+
+    function atualizarValoresComCartao() {
+      const totalRPacotes = parseFloat(document.getElementById('totalRPacotes').innerText);
+      const totalDPacotes = parseFloat(document.getElementById('totalDPacotes').innerText);
+      document.getElementById('totalRPacotesCartao').innerText = calcularTotalComCartao(totalRPacotes);
+      document.getElementById('totalDPacotesCartao').innerText = calcularTotalComCartao(totalDPacotes);
+    }
+
+    // Copia apenas as informações dos pacotes (sem login ou dados de pagamento)
+    function copiarInformacoesTopUp() {
+      let pacotesTexto = '';
+      let totalPacotesR = 0;
+      let totalPacotesD = 0;
+      Object.keys(pacoteQuantidades).forEach(pacote => {
+        if (pacoteQuantidades[pacote] > 0) {
+          const subtotalR = pacoteQuantidades[pacote] * pacotePrecos[pacote] * exchangeRate;
+          const subtotalD = pacoteQuantidades[pacote] * pacotePrecos[pacote];
+          pacotesTexto += `Pacote de $${pacote}: ${pacoteQuantidades[pacote]} (Total R$${subtotalR.toFixed(2)})\n`;
+          totalPacotesR += subtotalR;
+          totalPacotesD += subtotalD;
+        }
+      });
+      let texto = `Pacotes:\n${pacotesTexto}\nTotal dos Pacotes:\nR$: ${totalPacotesR.toFixed(2)} / $: ${totalPacotesD.toFixed(2)}`;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Informações dos Top Up copiadas para a área de transferência!');
+      }, () => {
+        alert('Falha ao copiar as informações.');
+      });
+    }
+
+    /* ======================== 
+       Funções Gold 
+    ============================*/
+    // Taxas de ouro ajustáveis
+    let goldRateLessThan10k = 29.00;
+    let goldRateBetween10k = 28.00;
+    let goldRateAbove20k = 27.00;
+
+    function updateOuroCalculations() {
+      const quantidade = parseInt(document.getElementById('quantidadeOuro').value) || 0;
+      let goldRateR;
+      if (quantidade < 10000) {
+        goldRateR = goldRateLessThan10k;
+      } else if (quantidade < 20000) {
+        goldRateR = goldRateBetween10k;
+      } else {
+        goldRateR = goldRateAbove20k;
+      }
+      // Cálculo: por cada 1000 unidades de ouro
+      const totalR = (quantidade / 1000) * goldRateR;
+      const goldRateD = 4.80; // Valor fixo em dólar
+      const totalD = (quantidade / 1000) * goldRateD;
+      let listaOuroGlobal = calcularListaOuro(quantidade);
+      document.getElementById('totalROuro').innerText = totalR.toFixed(2);
+      document.getElementById('totalDOuro').innerText = totalD.toFixed(2);
+      document.getElementById('quantidadeAnunciada').innerText = listaOuroGlobal.join(', ');
+    }
+
+    function calcularListaOuro(quantidade) {
+      const quantidadeAnunciada = Math.floor(quantidade + (quantidade * 5.3 / 100));
+      let divisao;
+      if (quantidade >= 20000) {
+        divisao = Math.ceil(quantidade / 5000);
+      } else {
+        divisao = Math.ceil(quantidade / 2500);
+      }
+      return dividirEmPartes(quantidadeAnunciada, divisao, quantidade);
+    }
+
+    function dividirEmPartes(total, partes, quantidade) {
+      let min, max;
+      if (quantidade >= 20000) {
+        min = Math.floor(total / partes * 0.9);
+        max = Math.ceil(total / partes * 1.1);
+      } else {
+        min = Math.floor(total / partes * 0.85);
+        max = Math.ceil(total / partes * 1.15);
+      }
+      let resultado = [];
+      let soma = 0;
+      for (let i = 0; i < partes - 1; i++) {
+        const valor = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (soma + valor >= total) {
+          resultado.push(total - soma);
+          return resultado;
+        }
+        resultado.push(valor);
+        soma += valor;
+      }
+      const ultimaParte = total - soma;
+      resultado.push(ultimaParte > 0 ? ultimaParte : min);
+      return resultado;
+    }
+
+    function copyTotalsToClipboard() {
+      const totalR = document.getElementById('totalROuro').innerText;
+      const totalD = document.getElementById('totalDOuro').innerText;
+      const quantidadeAnunciada = document.getElementById('quantidadeAnunciada').innerText;
+      const servidor = document.getElementById('servidor').value;
+      const textToCopy = `Servidor: ${servidor}\nTotal em R$: ${totalR}\nTotal em $: ${totalD}\nQuantidade de Ouro a anunciar: ${quantidadeAnunciada}`;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => alert('Totais do Gold copiados para a área de transferência'))
+        .catch(err => alert('Erro ao copiar texto: ' + err));
+    }
+
+    function copyMessageToClipboard() {
+      const textToCopy = `Ai você me encaminha o comprovante aqui na mensagem. Pois eu sou a irmã da Daoshi e não tô com acesso a conta ^^ 🌺~`;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => alert('Mensagem copiada para a área de transferência'))
+        .catch(err => alert('Erro ao copiar texto: ' + err));
+    }
+
+    /* ======================== 
+       Função das Flores
+    ============================*/
+    function createFlower() {
+      const flowers = ['🌸', '🌺', '🌻', '🌼', '💐'];
+      const flower = document.createElement('div');
+      flower.classList.add('flower');
+      flower.innerText = flowers[Math.floor(Math.random() * flowers.length)];
+      flower.style.left = Math.random() * 100 + 'vw';
+      flower.style.transform = `rotate(${Math.random() * 360}deg)`;
+      let duration = Math.random() * 5 + 3; // entre 3s e 8s
+      flower.style.animationDuration = duration + 's, ' + duration + 's';
+      document.body.appendChild(flower);
+      setTimeout(() => flower.remove(), duration * 1000);
+    }
+    setInterval(createFlower, 1000);
+
+    window.addEventListener('load', () => {
+      updatePacoteTotals();
+      atualizarValoresComCartao();
+      updateOuroCalculations();
+    });
+  </script>
+</head>
+<body>
+  <!-- Painel Gold (deve vir primeiro) -->
+  <div class="panel">
+    <h2>☀️ Ouro ☀️</h2>
+    <label for="quantidadeOuro">Quantidade de Ouro:</label>
+    <input type="number" id="quantidadeOuro" value="0" oninput="updateOuroCalculations()"><br>
+    <label for="servidor">Servidor:</label>
+    <input type="text" id="servidor" placeholder="Insira o servidor"><br>
+    <h3>Taxas de Ouro (por 1000 unidades):</h3>
+    <label for="rateLess10k">Se menor que 10k:</label>
+    <input type="number" step="0.01" id="rateLess10k" value="29.00" oninput="goldRateLessThan10k = parseFloat(this.value) || 29.00; updateOuroCalculations();"><br>
+    <label for="rate10k">Se entre 10k e 20k:</label>
+    <input type="number" step="0.01" id="rate10k" value="28.00" oninput="goldRateBetween10k = parseFloat(this.value) || 28.00; updateOuroCalculations();"><br>
+    <label for="rate20k">Se 20k ou mais:</label>
+    <input type="number" step="0.01" id="rate20k" value="27.00" oninput="goldRateAbove20k = parseFloat(this.value) || 27.00; updateOuroCalculations();"><br>
+    <p>Total em R$: R$<span id="totalROuro">0.00</span></p>
+    <p>Total em $: $<span id="totalDOuro">0.00</span></p>
+    <p>Quantidade de Ouro a anunciar: <span id="quantidadeAnunciada">0</span></p>
+    <button onclick="copyTotalsToClipboard()">Copiar Totais Ouro</button>
+    <!-- Botão opcional para copiar mensagem padrão -->
+    <button onclick="copyMessageToClipboard()">Copiar Mensagem</button>
+  </div>
+
+  <!-- Painel de Configuração do Top Up -->
+  <div class="panel">
+    <h2>Configurações Top Up</h2>
+    <label for="exchangeRate">Taxa de Câmbio ($ para R$):</label>
+    <input type="number" step="0.01" id="exchangeRate" value="5.74" oninput="exchangeRate = parseFloat(this.value) || 5.74; updatePacoteTotals(); atualizarValoresComCartao();">
+  </div>
+
+  <!-- Painéis Top Up -->
+  <div class="panel">
+    <h2>Pacotes de $1, $3 e $5</h2>
+    <label for="pacote1">Quantidade de $1:</label>
+    <input type="number" id="pacote1" value="0" oninput="updatePacoteQuantidades(1, this.value);"><br>
+    <label for="pacote3">Quantidade de $3:</label>
+    <input type="number" id="pacote3" value="0" oninput="updatePacoteQuantidades(3, this.value);"><br>
+    <label for="pacote5">Quantidade de $5:</label>
+    <input type="number" id="pacote5" value="0" oninput="updatePacoteQuantidades(5, this.value);"><br>
+    <p>Total: R$<span id="totalR1">0.00</span> / $<span id="totalD1">0.00</span></p>
+  </div>
+
+  <div class="panel">
+    <h2>Pacotes de $10, $10 Especial, $30 e $30 Especial</h2>
+    <label for="pacote10">Quantidade de $10:</label>
+    <input type="number" id="pacote10" value="0" oninput="updatePacoteQuantidades(10, this.value);"><br>
+    <label for="pacote11">Quantidade de $10 Especial:</label>
+    <input type="number" id="pacote11" value="0" oninput="updatePacoteQuantidades(11, this.value);"><br>
+    <label for="pacote30">Quantidade de $30:</label>
+    <input type="number" id="pacote30" value="0" oninput="updatePacoteQuantidades(30, this.value);"><br>
+    <label for="pacote31">Quantidade de $30 Especial:</label>
+    <input type="number" id="pacote31" value="0" oninput="updatePacoteQuantidades(31, this.value);"><br>
+    <p>Total: R$<span id="totalR10">0.00</span> / $<span id="totalD10">0.00</span></p>
+  </div>
+
+  <div class="panel">
+    <h2>Pacotes de $50, $50 Especial e $100</h2>
+    <label for="pacote50">Quantidade de $50:</label>
+    <input type="number" id="pacote50" value="0" oninput="updatePacoteQuantidades(50, this.value);"><br>
+    <label for="pacote51">Quantidade de $50 Especial:</label>
+    <input type="number" id="pacote51" value="0" oninput="updatePacoteQuantidades(51, this.value);"><br>
+    <label for="pacote100">Quantidade de $100:</label>
+    <input type="number" id="pacote100" value="0" oninput="updatePacoteQuantidades(100, this.value);"><br>
+    <p>Total: R$<span id="totalR50">0.00</span> / $<span id="totalD50">0.00</span></p>
+  </div>
+
+  <!-- Painel com Totais dos Top Up -->
+  <div class="panel">
+    <h2>Total dos Pacotes Top Up</h2>
+    <p>Total: R$<span id="totalRPacotes">0.00</span> / $<span id="totalDPacotes">0.00</span></p>
+    <button onclick="copiarInformacoesTopUp()">Copiar Totais Top Up</button>
+  </div>
+</body>
+</html>
